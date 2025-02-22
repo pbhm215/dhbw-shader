@@ -2,8 +2,8 @@
 Dieser GLSL-Shader rendert das DHBW-Logo, modelliert 3-dimensionales Objekt. Der Shader wurde als Prüfungsleistung für den Kurs Computergrafik an der DHBW Stuttgart erstellt.
 
 # Dokumentation
-1 Einleitung
-1.1 Problemstellung und Zielsetzung
+## Einleitung
+### Problemstellung und Zielsetzung
 Die vorliegende Arbeit besch¨aftigt sich mit der Implementierung eines OpenGL Shading Language (GLSL)-Fragmentshaders. Ziel ist es, das Duale Hochschule BadenWurttemberg (DHBW)-Logo allein durch mathematische Formeln a ¨ ls eine computergenerierte Grafik im 3-dimensionalen (3D)-Raum darzustellen. Die generierte
 Szene wird durch zus¨atzliche Implementierungen wie Boden, Beleuchtung, Schatten,
 Kameraperspektive, Nebel, etc. komplementiert. Durch die Integration der zus¨atzlichen
@@ -21,19 +21,19 @@ alle nicht ben¨otigten Funktionen, wie beispielsweise die Modellierung des grie
 3D-Modellierung des DHBW-Logos anhand mathematischer Prinzipien fortgefahren. Zuletzt werden die zus¨atzlichen grafischen Komponenten integriert und speziell
 fur die modellierte Szene angepasst. ¨
 Im vorliegenden Dokument sind alle blau-markierten Links und Querverweise klickbar.
-3
-2 Funktionsweise des Shaders
-2.1 Inbetriebnahme
+
+## Funktionsweise des Shaders
+### Inbetriebnahme
 Die Inbetriebnahme des Shaders gestaltet sich ¨außerst simpel: Der beiliegende GLSLCode kann einfach in ein neues Projekt auf der Shadertoy-Webseite kopiert werden.
 Die integrierte WebGL-Umgebung von Shadertoy rendert den eingefugten Code ganz ¨
 ohne Anpassungen durch Klick auf ”
 Kompilieren“ im nebenstehenden Fenster.
-2.2 Verwendete mathematische Prinzipien
+### Verwendete mathematische Prinzipien
 In diesem Kapitel werden die grundlegenden mathematischen Prinzipien fur die ¨
 Modellierung der Szene und letztlich fur die Implementierung des Shaders erl ¨ ¨autert.
 Die entstehenden grafischen Objekte sind die Grundlage fur die in Kapitel ¨ 2.3 und
-2.4 gezeigten Implementierungen.
-2.2.1 Kugel
+### gezeigten Implementierungen.
+#### Kugel
 Um das Prinzip der Modellierung mathematischer Objeke einmal darzustellen, wird
 mit der einfachsten Modellierung eines Objekts begonnen: der Kugel. Die Kugel
 kann durch die mathematische Gleichung
@@ -59,8 +59,8 @@ erstellt. (Siehe Abbildung 1.)
 Abbildung 1: Modellierte Kugel im Raum
 Die Funktion length() quadriert dafur die einzelnen x-, y- und z-Komponenten und ¨
 zieht die Wurzel aus ihrer Summe.
-4
-2.2.2 Box
+
+#### Box
 Eine Box bzw. ein Quader im 3D-Raum wird durch eine sogenannte Signed-DistanceFunction (SDF) modelliert. SDFs werden h¨aufig in der Computergrafik zur Modellierung 2-dimensionaler und 3-dimensionaler Objekte eingesetzt. Wie der Name vermuten l¨asst, wird hiermit der Abstand eines Punkts im Raum zum entsprechenden
 Objekt gemessen. Ist der Punkt außerhalb des Objekts, gibt die SDF die euklidische
 Distanz zur Oberfl¨ache des Objekts als positiven Wert zuruck. Enth ¨ ¨alt das Objekt
@@ -82,8 +82,8 @@ Der sich ergebende 1LE3 große Wurfel ist in Abbildung ¨ 2 zu sehen:
 Abbildung 2: Modellierter Wurfel im Raum ¨
 Dieser Quader bildet nachfolgend die Basis fur alle Modellierungen von rechteckigen ¨
 Wurfeln, Boxen und Quadern. ¨
-5
-2.2.3 Halb-Ellipse
+
+#### Halb-Ellipse
 Zur Modellierung von runden Kanten im DHBW-Logo wird noch eine weitere BasisGeometrie ben¨otigt. Die Halb-Ellipse wird ebenfalls durch eine SDF dargestellt:
 1 float sdHalfEllip ( vec2 pos , vec2 size )
 2 {
@@ -102,11 +102,11 @@ Referenzradius verrechnet. Zu beachten ist, dass die SDF der Halb-Ellipse nur in
 wurde eine Art Kugel mit Abrundungen in z-Richtung entstehen. D ¨ a das DHBWLogo sp¨ater im Profil modelliert werden soll ist die Abrundung in z-Richtung nicht
 erwunscht und die Modellierung der betroffenen Buchstaben erfo ¨ lgt uber den 2- ¨
 dimensionalen Weg.
-6
-2.3 Aufbau der Szene
+
+### Aufbau der Szene
 Dieses Kapitel besch¨aftigt sich mit der Modellierung des 3-dimensionalen DHBWLogos aus den in Kapitel 2.2 beschriebenen Modellierungselementen. Zu Ubersichtszwecken ¨
 werden Kommentare aus den Quellcodeausschnitten entfernt. Sie sind jedoch im beiliegenden Originalcode weiterhin enthalten.
-2.3.1 Buchstabe ”
+#### Buchstabe ”
 D“
 Der Buchstabe ”
 D“setzt sich aus einem Quader und zwei Halb-Ellipsen zusammen.
@@ -133,7 +133,7 @@ Modellierung als Floating-Point-Variable ausgegeben. Wird der Code durch Aufruf
 der Funktion (siehe Kapitel 2.3.5) in WebGL gerendert, entsteht folgendes Bild:
 Abbildung 3: Modellierter Buchstabe ”
 D“
-2.3.2 Buchstabe ”
+#### Buchstabe ”
 H“
 Der Buchstabe ”
 H“wird rein durch verschieden positionierte Quader modelliert.
@@ -159,11 +159,8 @@ Auch hier wird der gesamte Buchstabe auf seine korrekte Position in x-Richtung
 geruckt. Danach werden die einzelnen Quader mit ihren korrekte ¨ n Dimensionen und
 Positionen erzeugt. Sie werden abschließend in Zeile 12 und 13 durch entsprechende
 Min-Operationen zusammen zu einer Ausgabe gefugt. Das Ergebnis wird wiederum ¨
-als FLoating-Point-Variable ausgegeben und ist nach dem Rendering in Abbildung
-4 zu sehen:
-Abbildung 4: Modellierter Buchstabe ”
-H“
-2.3.3 Buchstabe ”
+als FLoating-Point-Variable ausgegeben.
+#### Buchstabe ”
 B“
 Das ”
 B“wird analog zum ”
@@ -174,10 +171,8 @@ nicht mithilfe zweier Instanzen von ”
 D“modelliert werden kann, da hier die Proportionen deutlich voneinander abweichen. Zudem wird der obere Halbbogen etwas kleiner als der untere Halbbogen modelliert, sodass beide Teile getrennt voneinander implementiert werden. Die erstellten Teile werden am Ende wieder mit
 min-Funktionen zusammengefugt und das Ergebnis ausgegeben. Es ist nach dem ¨
 Rendering in Abbildung 4 zu sehen:
-8
-Abbildung 5: Modellierter Buchstabe ”
-B“
-2.3.4 Buchstabe ”W“
+
+#### Buchstabe ”W“
 Um den Modellierungsprozess des Buchstabens ”
 W“zu erleichtern, wird er mithilfe
 zweier ”
@@ -209,12 +204,12 @@ Optik werden die beiden unteren Spitzen des ”
 W“durch die Begrenzungsfl¨ache
 1 v = max (v , -p . y + 3.0) ;
 abgeschnitten.
-9
+
 Die finale Modellierung des Buchstaben ”
 W“ist in Abbildung 6 dargestellt:
 Abbildung 6: Modellierter Buchstabe ”
 W“
-2.3.5 Gesamte Szene mit Boden
+#### Gesamte Szene mit Boden
 Final wird die komplett modellierte Szene zusammengebaut: Hierfur werden zun ¨ ¨achst
 die einzelnen Instanzen der Buchstaben erzeugt und anschließen mittels min-Funktionen
 miteinander verknupft: ¨
@@ -255,8 +250,8 @@ Bodens
 7 }
 Nach dem Rendering der Modellierung ergibt sich folgendes Ergebnis in Abbildung
 7:
-Abbildung 7: Modelliertes DHBW-Logo
-2.4 Weitere grafische Elemente
+
+### Weitere grafische Elemente
 Bei der Implementierung sonstiger grafischer Elemente wurde sich an den bereits
 bestehenden Implementierungen des verwendeten Projekts orientiert. Im Folgenden
 wird die Funktionsweise der auf die Szenerie angepassten und implementierten Grafikelemente rudiment¨ar beschrieben. Leider kann hier aus Platzgrunden nicht auf ¨
@@ -284,7 +279,7 @@ zudem, dass das Ambient- und das Back-Light mit dem Faktor occ multipliziert wer
 um realistische Licht- und Schattendarstellungen zu erzeugen, indem berucksichtigt ¨
 wird, welche Teile einer Szene oder eines Objekts durch andere verdeckt werden.
 Durch diese drei Beleuchtungsquellen wird die gesamte Szene optimal ausgeleuchtet.
-2.4.2 Himmel
+#### Himmel
 Die Farbe des Himmels wird in einer weiteren ausgelagerten Funktion erzeugt:
 1 vec3 skyColor ( in vec3 ro , in vec3 rd )
 2 {
@@ -303,7 +298,7 @@ Dies wird durch die mix-Funktion sichergestellt, die die eingegebenen Farben in 
 deshalb von der y-Koordinate abh¨angig. In Richtung Sonne wird der Himmel dann
 zunehmend rot eingef¨arbt, wie am Skalarprodukt mit dem Sonnenlicht-Vektor zu
 erkennen ist.
-2.4.3 Nebel
+#### Nebel
 Der nachfolgende Code zeigt die angepasste Implementierung des Nebel-Effekts am
 Horizont:
 1 vec3 fogcol = vec3 (0.1 ,0.125 ,0.15) ; // grau
@@ -319,8 +314,7 @@ zum Sonnenlicht (lig) ein roter Farbton eingemischt wird. Bei zunehmender Entfe
 Zuletzt wird die Himmelsfarbe mit der Nebelfarbe und der entsprechenden Distanz
 von Horizont interpoliert, wodurch sich ein gleichm¨aßig verteilter Nebeleffekt um
 den Horizont herum ergibt.
-12
-2.4.4 Kamera
+#### Kamera
 Auch die Kameraplatzierung und -winkel kann ganz genau an die Szenerie angepasst
 werden: Die n¨otigen Einstellungen der Parameter werden dafur in der ¨ mainImageFunktion getroffen:
 1 float an = -7.0 + sin ( iTime *0.15) *2.0; // Kameraschwenk (
@@ -340,8 +334,8 @@ Entfernung der Kamera zur Szene, der Winkel in x- und y-Richtung usw.
 Durch die Kombination der angepassten Effekte, wie Beleuchtung, Himmel und weiteren Effekten, entstehen optisch sehr ansprechende Szenerien, wie in Abbildung 8
 zu sehen:
 Abbildung 8: Modelliertes DHBW-Logo mit optischen Effekte
-13
-3 Fazit und Ausblick
+
+## Fazit und Ausblick
 Im Rahmen des Projekts wurde ein GLSL-Shader entwickelt, der das DHBW-Logo
 in einer 3-dimensionalen Umgebung darstellt. Alle der in Kapitel 1.1 gesetzten Ziele
 konnten erfullt werden. Das Projekt kann somit als voller Erfolg betrac ¨ htet werden.
@@ -349,9 +343,6 @@ Durch einige Anpassungen kann die modellierte Szene sogar wieder in die Landsch
 ”
 iChannel“in Shadertoy eingespielt werden, ergibt sich ein optisch sehr ansprechendes Bild (siehe Abbildungen 9
 und 10), das auch auf dem Deckblatt der vorliegenden Dokumentation zu sehen ist:
-Abbildung 9: DHBW-Logo in Landschaftsumgebung, schr¨ag
-Abbildung 10: DHBW-Logo in Landschaftsumgebung, frontal
-14
 Das Projekt kann in vielerlei Hinsicht noch erweitert werden: Beispielsweise kann der
 Quellcode in eine unabh¨angige HTML-Datei portiert werden, wodurch die WebGLLaufzeitumgebung des Browsers genutzt wird, um unabh¨angig von Shadertoy zu
 sein. Innerhalb des Shaders k¨onnen beispielsweise die Farben und Texturen der
