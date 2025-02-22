@@ -1,0 +1,364 @@
+precision mediump float;
+
+// Sonnenlichts = Basis der Beleuchtung
+vec3 sunLig = normalize(vec3(0.7,0.1,0.4)); 
+
+// Hash für Zufallszahlen
+vec2 hash(float n)
+{
+    return fract(sin(vec2(n,n+1.0))*vec2(43758.5453123,22578.1459123));
+}
+
+// Skalarprodukt
+float ndot(vec2 a, vec2 b)
+{ 
+    return a.x*b.x - a.y*b.y;
+}
+
+// SDF Raute
+float sdRhombus( in vec2 p, in vec2 b, in float r ) 
+{
+    vec2 q = abs(p);
+    float h = clamp((-2.0*ndot(q,b) + ndot(b,b))/dot(b,b), -1.0, 1.0);
+    float d = length(q - 0.5*b*vec2(1.0-h,1.0+h));
+    d *= sign( q.x*b.y + q.y*b.x - b.x*b.y );
+	return d - r;
+}
+
+// SDF Quader
+float sdBox(vec3 p, vec3 b)
+{
+  vec3 d = abs(p) - b;
+  return min(max(d.x,max(d.y,d.z)),0.0) + length(max(d,0.0));
+}
+
+// SDF Ellipse
+float sdHalfEllip(vec2 p, vec2 size)
+{
+    p.x = max(0.0, p.x); // Halbe Ellipse
+    float smallestRadius = min(size.x, size.y); // Kleinere Achse für Skalierung
+    return (length(p / size) * smallestRadius) - smallestRadius; // Berechnet die normierte Distanz (Skalierung), sodass die Ellipse korrekt geformt ist
+}
+
+//------------ DHBW-Logo ------------//
+
+// Buchstabe "D"
+float Dhbw(vec3 p, float thick)
+{
+    p.x += 15.0;
+    float d = sdHalfEllip(p.xy, vec2(5.0, 6.0)); // Hauptellipse für den äußeren Rand des 'D'
+    d = max(d, -p.x - 3.5); // Definiert die linke Begrenzung des 'D'
+    float d2 = sdHalfEllip(p.xy, vec2(3.0, 4.0)); // Zweite kleinere Ellipse für den inneren Ausschnitt des 'D'
+    d2 = max(d2, min(-p.y + 5.0, -p.x - 1.5)); // linke Begrenzung für das Loch im 'D'
+    d = max(d, -d2); // Subtrahiert das Loch aus dem Buchstaben
+    float Dhbw = max(d, abs(p.z) - thick);
+    return Dhbw;
+}
+
+// Buchstabe "H"
+float dHbw(vec3 p, float thick)
+{ 
+    p.x += 5.0;
+    vec3 Hlpos = vec3(p.x+3.0, p.y, p.z); // Position für linke H-Säule
+    float Hl = sdBox(Hlpos, vec3(1.0,6.0, thick)); // Erzeugung linke H-Säule
+    vec3 Hrpos = vec3(p.x-3.0, p.y, p.z);
+    float Hr = sdBox(Hrpos, vec3(1.0,6.0, thick));
+    vec3 Hmpos = vec3(p.x, p.y, p.z);
+    float Hm = sdBox(Hmpos, vec3(3.0,1.0, thick));
+    float dHbw = min(Hl, Hr);
+    dHbw = min(dHbw, Hm);
+    return dHbw;
+}
+
+// Buchstabe "B"
+float dhBw(in vec3 p, float thick)
+{ 
+    p.x -= 5.0;
+    p.y -= 3.0;
+    float d = sdHalfEllip(p.xy, vec2(2.75, 3.0)); // Hauptellipse für den äußeren Rand
+    d = max(d, -p.x - 4.0); // Linke Begrenzung
+    float d2 = sdHalfEllip(p.xy, vec2(1.0, 1.5)); // Lochellipse
+    d2 = max(d2, min(-p.y + 2.5, -p.x - 2.0)); // linke Begrenzung für das Loch
+    d = max(d, -d2); // Subtrahiert das Loch aus dem Buchstaben
+    float thickness = 2.0;  // Definiert die Dicke des extrudierten Buchstabens in Z-Richtung
+    float dhBw1 = max(d, abs(p.z) - thick);
+    p.y += 5.5;
+    float dd = sdHalfEllip(p.xy, vec2(3.75, 3.5)); // Hauptellipse für den äußeren Rand
+    dd = max(dd, -p.x - 4.0); // Linke Begrenzung
+    float dd2 = sdHalfEllip(p.xy, vec2(1.75, 1.75)); // Lochellipse
+    dd2 = max(dd2, min(-p.y + 2.5, -p.x - 2.0)); // linke Begrenzung für das Loch
+    dd = max(dd, -dd2); // Subtrahiert das Loch aus dem Buchstaben
+    float dhBw2 = max(dd, abs(p.z) - thick);
+    float dhBw = min(dhBw1, dhBw2);
+    return dhBw;
+}
+
+// Buchstabe "V"
+float dhbV(vec3 p, float thick)
+{
+    p.y += 9.0;
+    p.x = abs(p.x);
+    vec2 a = normalize(vec2(10.0, -2.5)); // Winkel
+    float v = dot(p.xy, a);
+    float v2 = v + 2.0; // innerer Ausschnitt
+    v = min(v, -p.y + 16.0);
+    v2 = min(v2, -p.y + 15.0); // Obere Begrenzung
+    v = max(v, -v2); // Alles nach oberer Begrenzung wegschneiden
+    v = max(v, abs(p.x - 0.0) - 5.0);//Begrenzung rechts/links
+    v = max(v, -p.y + 3.0);
+    float dhbV = max(v, abs(p.z) - thick);
+    return dhbV; // Gibt die signierte Distanz für die 3D-Form zurück
+}
+
+// Buchstabe "W"
+float dhbW(vec3 p, float thick)
+{
+    p.x -= 12.0;
+    float dhbV1 = dhbV(p, thick);
+    p.x -= 5.5;
+    float dhbV2 = dhbV(p, thick);
+    float dhbW = min(dhbV1, dhbV2); 
+    return dhbW;
+}
+
+// Zusammensetzung "DHBW"
+vec3 scene(in vec3 p)
+{
+    p.y += 3.0; // Anheben der Position
+    float thickness = 7.0;
+
+    // Buchstaben erzeugen
+    float Dhbw = Dhbw(p, thickness);
+    float dHbw = dHbw(p, thickness);
+    float dhBw = dhBw(p, thickness);
+    float dhbW = dhbW(p, thickness);
+    
+    // Buchstaben darstellen
+    float DHbw = min(Dhbw, dHbw);
+    float DHBw = min(DHbw, dhBw);
+    float DHBW = min(DHBw, dhbW);
+
+    return vec3(DHBW, 1.0, 0.5);
+}
+
+// Boden
+vec3 map(in vec3 p)
+{
+    vec3 res = scene(p); // Erzeugung von "DHBW"
+    float m = p.y + 9.5; // Bodenhöhe
+    if(m<res.x) res = vec3(m, 3.0, 1.0); // Erzeugung des Bodens
+    return res;
+}
+
+#define ZERO (min(iFrame,0))
+
+vec3 calcNormal(vec3 p, float t) // https://iquilezles.org/articles/normalsSDF
+{
+#if 0    
+    float e = 0.001*t;
+
+    vec2 h = vec2(1.0,-1.0)*0.5773;
+    return normalize( h.xyy*map(p + h.xyy*e).x + 
+					  h.yyx*map(p + h.yyx*e).x + 
+					  h.yxy*map(p + h.yxy*e).x + 
+					  h.xxx*map(p + h.xxx*e).x);
+#else    
+    vec3 n = vec3(0.0);
+    for(int i=ZERO; i<4; i++)
+    {
+        vec3 e = 0.5773*(2.0*vec3((((i+3)>>1)&1),((i>>1)&1),(i&1))-1.0);
+        n += e*map(p+e*0.001*t).x;
+    }
+    return normalize(n);
+#endif    
+}
+
+vec3 intersect(in vec3 ro, in vec3 rd)
+{
+    vec2 ma = vec2(0.0);
+    vec3 res = vec3(-1.0);
+    float tmax = 1000.0;
+    float t = 10.0;
+    for(int i=0; i<256; i++)
+    {
+        vec3 pos = ro + t*rd;
+        vec3 h = map(pos);
+        if( h.x<(0.0001*t) || t>tmax) break;
+        t += h.x;
+        ma = h.yz;
+    }
+
+    if( t<tmax)
+    {
+    	res = vec3(t, ma);
+    }
+    return res;
+}
+
+vec4 textureBox( in sampler2D tex, in vec3 pos, in vec3 nor)
+{
+    vec4 cx = texture(tex, pos.yz);
+    vec4 cy = texture(tex, pos.xz);
+    vec4 cz = texture(tex, pos.xy);
+    vec3 m = nor*nor;
+    return (cx*m.x + cy*m.y + cz*m.z)/(m.x+m.y+m.z);
+}
+
+float calcShadow(in vec3 ro, in vec3 rd, float k)
+{
+    float res = 1.0;
+    
+    float t = 0.01;
+    for(int i=0; i<150; i++)
+    {
+        vec3 pos = ro + t*rd;
+        float h = map(pos).x;
+        res = min(res, k*max(h,0.0)/t);
+        if(res<0.0001 ) break;
+        t += clamp(h,0.01,0.5);
+    }
+
+    return res;
+}
+
+//Occlusion für Ambient- und Backlight
+float calcOcclusion(in vec3 pos, in vec3 nor, float ra)
+{
+    float occ = 0.0;
+    for(int i=ZERO; i<32; i++)
+    {
+        float h = 0.01 + 4.0*pow(float(i)/31.0,2.0);
+        vec2 an = hash(ra + float(i)*13.1)*vec2(3.14159, 6.2831);
+        vec3 dir = vec3( sin(an.x)*sin(an.y), sin(an.x)*cos(an.y), cos(an.x));
+        dir *= sign(dot(dir,nor));
+        occ += clamp(5.0*map( pos + h*dir).x/h, -1.0, 1.0);
+    }
+    return clamp(occ/32.0, 0.0, 1.0);
+}
+
+// Himmel
+vec3 skyColor( in vec3 ro, in vec3 rd )
+{
+    vec3 col = vec3(0.3,0.4,0.5)*0.3 - 0.3*rd.y; // blauer Himmel
+    col = mix( col, vec3(0.2,0.25,0.30)*0.5, exp(-30.0*rd.y)) ; // grau für Horizont reinmixen
+    float sd = pow( clamp( 0.25 + 0.75*dot(sunLig,rd), 0.0, 1.0), 4.0); // rot Richtung Sonne reinmixen 
+    col = mix( col, vec3(1.2,0.30,0.05)/1.2, sd*exp(-abs((60.0-50.0*sd)*rd.y))); // Räumlicher Verlauf des roten Lichtbands
+    return col;
+}
+
+
+// Kameraeinstellungen
+mat3 setCamera( in vec3 ro, in vec3 ta, float cr)
+{
+	vec3 cw = normalize(ta-ro);
+	vec3 cp = vec3(sin(cr), cos(cr),0.0);
+	vec3 cu = normalize(cross(cw,cp));
+	vec3 cv = normalize(cross(cu,cw));
+    return mat3(cu, cv, cw);
+}
+
+
+// Hauptfunktion
+void mainImage(out vec4 fragColor, in vec2 fragCoord)
+{
+	vec2 p = (2.0*fragCoord-iResolution.xy) / iResolution.y; // Normalisierung
+    float an = -7.0 + sin(iTime*0.15)*2.0; // Kameraschwenk (Seite, Schnelligkeit, Weite)
+    float ra = 60.0; // Kameraentfernung
+    float fl = 3.0; // Kamerazoom
+    vec3 ta = vec3(0.0,-3.0,0.0); // Kamerposition
+    vec3 ro = ta + vec3(ra*sin(an),12.0,ra*cos(an)); // Kamerahöhenwinkel
+    mat3 ca = setCamera(ro, ta, 0.0); // Kameraschräge
+    vec3 rd = ca * normalize(vec3(p.xy,fl));
+    
+    vec3 col = vec3(0.0);
+    col = skyColor(ro, rd);
+    
+    float resT = 10000.0;
+    vec3 res = intersect(ro, rd);
+    if(res.y>0.0)
+    {
+        float t = res.x;
+        vec3 pos = ro + t*rd;
+        vec3 nor = calcNormal(pos, t);
+        float fre = pow( clamp( 1.0+dot(nor,rd), 0.0, 1.0), 5.0);
+		float foc = 1.0; // Fake Occlusion
+        vec3 mate = vec3(0.2);
+        vec2 mspe = vec2(0.0);
+        float mbou = 0.0;
+        float mter = 0.0;
+        if( res.y<2.0)
+        {
+            vec3 te = textureBox( iChannel0, pos*0.05, nor).xyz;
+            mate = vec3(0.14,0.10,0.07) + 0.1*te;
+            mate *= 0.8 + 0.4*res.z;
+            mate *= 1.15;            
+            mspe = vec2(1.0,8.0);
+            mbou = 1.0;
+
+            float ho = 1.0;
+            if( pos.y>-7.5) ho *= smoothstep(0.0, 5.0, (pos.y+7.5));
+            ho = mix(0.1+ho*0.3, 1.0, clamp(0.6 + 0.4*dot( normalize(nor.xz*vec2(0.5,1.0)), normalize(pos.xz*vec2(0.5,1.0))) + 1.0*nor.y*nor.y, 0.0, 1.0 )); // Horizontal Occlusion: Negatives Licht, im inneren der Objekte => Schluckt Licht im Inneren eines Objekts
+            foc *= ho; 
+            foc *= 0.4 + 0.6*smoothstep( 2.0, 15.0, length(pos*vec3(0.5,0.25,1.0)));
+            float rdis = clamp(-0.15*max(sdRhombus( pos.yz-vec2(8.3,0.0)+vec2(2.0,0.0), vec2(2.25,8.5), 0.05),-(pos.y-8.3+2.0)), 0.0, 1.0);
+            if(rdis>0.0001) foc = 0.1 + sqrt(rdis);
+			if(pos.y<5.8) foc *= 0.6 + 0.4*smoothstep(0.0, 1.5, -(pos.y-5.8)); // Schatten oben 
+            if(pos.y<3.4) foc *= 0.6 + 0.4*smoothstep(0.0, 2.5, -(pos.y-3.4)); // Schatten in vertikaler Höhe oben ist größer
+
+            foc *= 0.8;            
+        }
+
+        float occ = 0.33 + 0.5*nor.y;
+        occ = calcOcclusion(pos,nor,0.0) * foc;
+        
+
+        vec3 lig = sunLig;
+        vec3 ligbak = normalize(vec3(-lig.x,0.0,-lig.z));
+        float dif = clamp(dot(nor, lig), 0.0, 1.0);
+        float sha = calcShadow(pos+nor*0.001, lig, 32.0);
+        dif *= sha;
+        float amb = (0.8 + 0.2*nor.y);
+        amb = mix(amb, amb*(0.5+0.5*smoothstep(-8.0,-1.0,pos.y)), mbou);
+
+        vec3 qos = pos/1.5 - vec3(0.0,1.0,0.0);
+
+        float bak = clamp(0.4+0.6*dot(nor, ligbak), 0.0, 1.0);
+        bak *= 0.6 + 0.4*smoothstep(-8.0,-1.0,qos.y);
+        
+        vec3 hal = normalize(lig -rd);
+        float spe = pow(clamp(dot(nor,hal), 0.0, 1.0), mspe.y)*(0.1+0.9*fre)*sha*(0.5+0.5*occ);
+
+        // Beleuchtung
+        col = vec3(0.0);
+        col += amb*1.0*vec3(0.15,0.25,0.35)*occ*(1.0+mter); // Ambient-Light = Himmel (Blau) => Komplementärfarbe zu Gelb!
+        col += dif*5.0*vec3(0.90,0.55,0.35); // Key-Light = Sonne (Gelb) Intnsität: 10x Ambient-Light
+        col += bak*1.7*vec3(0.10,0.11,0.12)*occ*mbou; // Back-Light = Reflektiertes Licht der Sonne (in entgegengesetzter Richtung)
+        col += spe*6.0*mspe.x*occ;
+        col *= mate;
+        
+        
+
+        // Nebel am Horizont
+        
+        vec3 fogcol = vec3(0.1,0.125,0.15); // Farbe des Nebels 
+        float sd = pow( clamp( 0.25 + 0.75*dot(lig,rd), 0.0, 1.0), 4.0); // Wird mit Nähe zur Sonne rötlicher
+	    fogcol = mix( fogcol, vec3(1.0,0.25,0.042), sd*exp(-abs((60.0-50.0*sd)*abs(rd.y))) ) ;
+
+        //vec3 fogcol = vec3(0.2,0.25,0.30)*0.5;
+        float fog = 1.0 - exp(-0.0013*t); // Entfernung berechnen
+        col *= 1.0-0.5*fog; // Weniger Beleuchtung mit zunehmender Entfernung (schwarz)
+        col = mix(col, fogcol, fog); // Verwischt den Horizont
+    }
+
+    col = max(col, 0.0);
+    col = 1.2*col/(1.0+col);
+    
+    col += 0.2*vec3(1.0,0.7,0.4)*pow(clamp(dot(sunLig,rd),0.0,1.0),6.0); // Linsen-Effekt des Lichts
+    
+    col = sqrt(col);
+    col = clamp(1.9*col-0.1, 0.0, 1.0);
+    col = col*0.1 + 0.9*col*col*(3.0-2.0*col);
+    col = pow(col, vec3(0.76,0.98,1.0));       
+
+    fragColor = vec4(col, 1.0);
+}
